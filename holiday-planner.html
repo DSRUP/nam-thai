@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tripcraft</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1410;--ink-soft:#4a453f;--ink-muted:#9a9088;--ink-faint:#d4cfc8;--sand:#f5f0e8;--sand-mid:#ede6d8;--sand-dark:#d9cfc0;--cream:#fdfaf5;--sky:#3b7abf;--sky-light:#e8f0f9;--sky-dark:#1e4a7a;--terra:#c25a2a;--terra-light:#faeee6;--terra-dark:#8a3a18;--sage:#4a7a5a;--sage-light:#e8f2eb;--sage-dark:#2a4a36;--amber:#c27a1a;--amber-light:#fef3dc;--amber-dark:#8a5a0a;--rose:#b84060;--rose-light:#fae8ee;--rose-dark:#7a2040;--purple:#6a4abf;--purple-light:#f0ecfa;--r:12px;--rsm:8px;--rlg:18px;--sh:0 2px 16px rgba(26,20,16,.08);--shm:0 4px 24px rgba(26,20,16,.12)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;font-size:14px}
+.app{display:flex;flex-direction:column;min-height:100vh}
+/* TOPBAR */
+.topbar{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--cream);letter-spacing:-.5px}.logo-dot{color:var(--terra)}
+.trip-name-input{background:transparent;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:var(--cream);outline:none;min-width:220px;text-align:center}
+.trip-name-input::placeholder{color:rgba(253,250,245,.4)}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.btn-ghost{background:rgba(253,250,245,.12);border:1px solid rgba(253,250,245,.2);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:6px 14px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.btn-ghost:hover{background:rgba(253,250,245,.22)}
+.btn-posttrip{background:var(--terra);border:none;color:white;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:6px 14px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.btn-posttrip:hover{background:var(--terra-dark)}
+.main{display:flex;flex:1;overflow:hidden}
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--sand);border-right:1px solid var(--sand-dark);padding:1.25rem .875rem;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.sidebar-section{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);padding:8px 8px 4px;margin-top:8px}
+.sidebar-section:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rsm);cursor:pointer;font-size:14px;font-weight:400;color:var(--ink-soft);transition:background .12s,color .12s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--sand-mid);color:var(--ink)}
+.nav-item.active{background:var(--ink);color:var(--cream);font-weight:500}
+.nav-icon{font-size:15px;opacity:.75;width:18px;text-align:center}
+.nav-item.active .nav-icon{opacity:1}
+.traveller-chips{display:flex;flex-direction:column;gap:4px;padding:0 4px}
+.traveller-chip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);padding:5px 8px;border-radius:var(--rsm)}
+.t-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.add-btn-sm{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-muted);padding:5px 8px;cursor:pointer;border-radius:var(--rsm);border:1px dashed var(--sand-dark);background:none;width:100%;text-align:left;transition:border-color .12s,color .12s;margin-top:2px}
+.add-btn-sm:hover{border-color:var(--ink-muted);color:var(--ink)}
+.sidebar-total{padding:8px;border-top:1px solid var(--sand-dark);margin-top:auto}
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:2rem}
+.page{display:none}.page.active{display:block}
+/* CALENDAR */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.cal-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink)}
+.cal-nav{display:flex;gap:6px}
+.cal-nav-btn{width:32px;height:32px;border-radius:var(--rsm);background:var(--sand);border:1px solid var(--sand-dark);cursor:pointer;font-size:16px;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:background .12s}
+.cal-nav-btn:hover{background:var(--sand-dark)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{text-align:center;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);padding:4px 0 8px}
+.cal-cell{min-height:68px;background:white;border:1px solid var(--sand-dark);border-radius:var(--rsm);padding:6px 7px;cursor:pointer;transition:border-color .12s,box-shadow .12s;overflow:hidden}
+.cal-cell:hover{border-color:var(--sky);box-shadow:var(--sh)}
+.cal-cell.empty{background:var(--sand);cursor:default;border-color:transparent}.cal-cell.empty:hover{box-shadow:none;border-color:transparent}
+.cal-cell.today{border-color:var(--terra)}
+.cal-cell.has-dest{background:var(--sky-light);border-color:#c0d8f0}
+.cal-cell.has-trans{background:var(--amber-light);border-color:#f5d898}
+.cal-cell.has-both{background:linear-gradient(135deg,var(--sky-light) 50%,var(--amber-light) 50%);border-color:var(--sky)}
+.cal-day-num{font-size:12px;font-weight:600;color:var(--ink-soft)}.cal-cell.today .cal-day-num{color:var(--terra)}
+.cal-event-pill{display:flex;align-items:center;font-size:10px;font-weight:500;padding:2px 5px;border-radius:4px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pill-dest{background:var(--sky-light);color:var(--sky-dark);border:1px solid #c0d8f0}
+.pill-trans{background:var(--amber-light);color:var(--amber-dark);border:1px solid #f5d898}
+.legend-row{display:flex;gap:16px;margin-top:10px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft)}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+.section-divider{border:none;border-top:1px solid var(--sand-mid);margin:1.5rem 0}
+.page-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--ink)}
+/* TIMELINE */
+.timeline-track{position:relative;height:52px;border-radius:var(--rsm);overflow:hidden;background:var(--sand);border:1px solid var(--sand-dark);margin-bottom:6px}
+.timeline-bar{position:absolute;top:6px;height:40px;border-radius:8px;display:flex;align-items:center;padding:0 10px;font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:opacity .15s}
+.timeline-bar:hover{opacity:.8}.tbar-dest{background:var(--sky);color:white}.tbar-trans{background:var(--amber);color:white}
+.timeline-dates{display:flex;position:relative;height:20px;margin-bottom:4px}
+.tdate-label{position:absolute;font-size:10px;color:var(--ink-muted);transform:translateX(-50%)}
+.timeline-empty{text-align:center;padding:1.5rem;background:var(--sand);border-radius:var(--r);color:var(--ink-muted);font-size:13px;font-style:italic}
+/* FX BAR */
+.fx-bar{background:white;border:1px solid var(--sand-dark);border-radius:var(--r);padding:.875rem 1.25rem;margin-top:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.fx-label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);white-space:nowrap}
+.fx-input-wrap{display:flex;align-items:center;gap:6px}.fx-prefix{font-size:14px;color:var(--ink-muted)}
+.fx-input{width:90px;padding:6px 10px;background:var(--sand);border:1px solid var(--sand-dark);border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--ink);outline:none}
+.fx-input:focus{border-color:var(--sky)}.fx-arrow{font-size:16px;color:var(--ink-muted)}
+.fx-result{font-size:18px;font-weight:600;color:var(--ink);font-family:'DM Serif Display',serif}
+.fx-rate{font-size:12px;color:var(--ink-muted);margin-left:auto}.fx-rate span{color:var(--sage-dark);font-weight:500}
+/* ITINERARY */
+.itinerary-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.add-btns{display:flex;gap:8px}
+.btn-dest{background:var(--sky-light);border:1px solid #c0d8f0;color:var(--sky-dark);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:7px 14px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .12s}
+.btn-dest:hover{background:#d0e5f5}
+.btn-trans{background:var(--amber-light);border:1px solid #f5d898;color:var(--amber-dark);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:7px 14px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .12s}
+.btn-trans:hover{background:#fde9b0}
+/* STOP CARDS */
+.stop-card{background:white;border:1px solid var(--sand-dark);border-radius:var(--r);margin-bottom:6px;overflow:hidden;transition:box-shadow .15s,border-color .15s}
+.stop-card:hover{box-shadow:var(--sh)}.stop-card.dragging{opacity:.5;border-color:var(--sky)}.stop-card.drag-over{border-color:var(--sky);border-style:dashed}
+.stop-header{display:flex;align-items:center}
+.drag-handle{width:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:grab;align-self:stretch;color:var(--ink-faint);transition:color .12s,background .12s;border-right:1px solid var(--sand)}
+.drag-handle:hover{color:var(--ink-muted);background:var(--sand)}
+.drag-dots{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:2px}.drag-dot{width:3px;height:3px;border-radius:50%;background:currentColor}
+.type-bar{width:5px;flex-shrink:0;align-self:stretch;min-height:52px}.type-dest{background:var(--sky)}.type-trans{background:var(--amber)}
+.stop-main{flex:1;min-width:0;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.stop-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.icon-dest{background:var(--sky-light)}.icon-trans{background:var(--amber-light)}
+.stop-info{flex:1;min-width:0}
+.stop-name{font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stop-dates{font-size:12px;color:var(--ink-muted);margin-top:1px}
+.stop-right{display:flex;align-items:center;gap:8px;flex-shrink:0;padding-right:10px}
+.stop-cost{font-size:14px;font-weight:600;color:var(--ink)}.stop-cost.zero{color:var(--ink-faint);font-weight:400}
+.status-pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;cursor:pointer;transition:opacity .1s;white-space:nowrap;border:none;font-family:'DM Sans',sans-serif}
+.status-pill:hover{opacity:.8}
+.s-booked{background:var(--sage-light);color:var(--sage-dark);border:1px solid #b8d8c0}
+.s-confirm{background:var(--amber-light);color:var(--amber-dark);border:1px solid #f5d898}
+.s-tbc{background:var(--sand-mid);color:var(--ink-muted);border:1px solid var(--sand-dark)}
+.s-cancelled{background:var(--rose-light);color:var(--rose-dark);border:1px solid #f0c0d0}
+.reorder-btns{display:flex;flex-direction:column;gap:1px}
+.reorder-btn{width:22px;height:22px;border-radius:4px;background:var(--sand);border:1px solid var(--sand-dark);cursor:pointer;font-size:11px;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;transition:background .1s}
+.reorder-btn:hover{background:var(--sand-dark);color:var(--ink)}.reorder-btn:disabled{opacity:.3;cursor:not-allowed}
+.expand-btn{width:30px;height:30px;border-radius:var(--rsm);background:var(--sand);border:none;cursor:pointer;color:var(--ink-muted);font-size:14px;display:flex;align-items:center;justify-content:center;transition:background .12s,transform .2s}
+.expand-btn.open{transform:rotate(180deg)}.expand-btn:hover{background:var(--sand-dark)}
+.stop-form{border-top:1px solid var(--sand);padding:1.25rem 1.25rem 1.25rem 50px;display:none;background:var(--cream)}
+.stop-form.open{display:block}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.ff{margin-bottom:12px}
+.fl{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);display:block;margin-bottom:5px}
+.fi{width:100%;padding:8px 12px;background:white;border:1px solid var(--sand-dark);border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color .12s}
+.fi:focus{border-color:var(--sky)}.fi::placeholder{color:var(--ink-faint)}
+select.fi{cursor:pointer}textarea.fi{resize:vertical;min-height:70px}
+.pw{position:relative}.pp{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--ink-muted);pointer-events:none}.pw .fi{padding-left:22px}
+.form-footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--sand-mid)}
+.btn-del{background:none;border:1px solid var(--rose-light);color:var(--rose);font-family:'DM Sans',sans-serif;font-size:13px;padding:6px 12px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .12s}
+.btn-del:hover{background:var(--rose-light)}
+.btn-save{background:var(--ink);border:none;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:7px 18px;border-radius:var(--rsm);cursor:pointer;transition:background .12s}
+.btn-save:hover{background:var(--ink-soft)}
+/* STOP DOCS */
+.stop-docs-wrap{border-top:1px solid var(--sand-mid);margin-top:12px;padding-top:12px}
+.stop-docs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stop-docs-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted)}
+.btn-attach{background:none;border:1px solid var(--sand-dark);color:var(--ink-muted);font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 10px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;gap:4px;transition:border-color .12s,color .12s}
+.btn-attach:hover{border-color:var(--sky);color:var(--sky-dark)}
+.doc-chip{display:flex;align-items:center;gap:8px;background:white;border:1px solid var(--sand-dark);border-radius:var(--rsm);padding:6px 10px;margin-bottom:5px}
+.doc-chip-icon{font-size:16px;flex-shrink:0}
+.doc-chip-name{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-chip-ref{font-size:11px;color:var(--ink-muted)}
+.doc-chip-del{background:none;border:none;cursor:pointer;color:var(--ink-faint);font-size:14px;padding:2px;border-radius:4px;margin-left:auto;flex-shrink:0}
+.doc-chip-del:hover{color:var(--rose)}
+.doc-empty{font-size:13px;color:var(--ink-faint);font-style:italic;padding:4px 0}
+/* COST BAR */
+.cost-bar{background:var(--ink);border-radius:var(--r);padding:1rem 1.5rem;margin-top:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.cost-lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(253,250,245,.5)}
+.cost-val{font-family:'DM Serif Display',serif;font-size:26px;color:var(--cream);margin-top:2px}
+.cost-breakdown{display:flex;gap:1.5rem}.ci-val{font-size:17px;font-weight:600;color:var(--cream)}.ci-lbl{font-size:11px;color:rgba(253,250,245,.45);margin-top:1px}
+/* DOCUMENTS PAGE */
+.docs-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.btn-primary{background:var(--ink);border:none;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border-radius:var(--rsm);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .12s}
+.btn-primary:hover{background:var(--ink-soft)}
+.doc-filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--sand-mid)}
+.filter-chip{font-size:12px;font-weight:500;padding:5px 12px;border-radius:20px;border:1px solid var(--sand-dark);background:white;color:var(--ink-soft);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
+.filter-chip:hover{border-color:var(--sky);color:var(--sky-dark)}
+.filter-chip.active{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+.filter-chip.active-stop{background:var(--sky);color:white;border-color:var(--sky)}
+.filter-chip.active-traveller{background:var(--sage);color:white;border-color:var(--sage)}
+.doc-cat-title{font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.doc-category{margin-bottom:1.5rem}
+.doc-card{background:white;border:1px solid var(--sand-dark);border-radius:var(--r);padding:1rem 1.25rem;display:flex;align-items:center;gap:14px;margin-bottom:8px;transition:box-shadow .12s}
+.doc-card:hover{box-shadow:var(--sh)}
+.doc-card-icon{width:44px;height:44px;border-radius:10px;background:var(--sand);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.doc-card-name{font-size:15px;font-weight:600;color:var(--ink)}
+.doc-card-meta{font-size:12px;color:var(--ink-muted);margin-top:2px}
+.doc-card-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.exp-ok{background:var(--sage-light);color:var(--sage-dark);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.exp-soon{background:var(--amber-light);color:var(--amber-dark);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.exp-none{background:var(--sand-mid);color:var(--ink-muted);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.exp-over{background:var(--rose-light);color:var(--rose-dark);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.doc-card-del{background:none;border:none;cursor:pointer;color:var(--ink-faint);font-size:16px;padding:4px;border-radius:var(--rsm);transition:color .12s}
+.doc-card-del:hover{color:var(--rose)}
+.doc-empty-cat{text-align:center;padding:1.25rem;background:var(--sand);border-radius:var(--r);border:2px dashed var(--sand-dark);color:var(--ink-muted);font-size:13px;font-style:italic}
+.doc-tag{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
+.dtag-stop{background:var(--sky-light);color:var(--sky-dark)}
+.dtag-person{background:var(--sage-light);color:var(--sage-dark)}
+/* MAP */
+.map-container{background:var(--sand);border-radius:var(--r);border:1px solid var(--sand-dark);overflow:hidden;margin-bottom:1.5rem}
+.map-placeholder{padding:3rem 2rem;text-align:center}
+.map-ph-icon{font-size:48px;margin-bottom:1rem}.map-ph-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);margin-bottom:.5rem}
+.map-ph-sub{font-size:14px;color:var(--ink-muted);max-width:400px;margin:0 auto;line-height:1.6}
+.map-stop-row{background:white;border:1px solid var(--sand-dark);border-radius:var(--rsm);padding:.75rem 1rem;display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.map-num{width:28px;height:28px;border-radius:50%;background:var(--sky);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.map-num.trans{background:var(--amber)}
+.map-stop-name{font-size:14px;font-weight:500;color:var(--ink)}.map-stop-date{font-size:12px;color:var(--ink-muted)}
+/* POST-TRIP */
+.posttrip-banner{background:linear-gradient(135deg,#2a1a10 0%,#1a1410 100%);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem}
+.pt-banner-icon{font-size:32px;flex-shrink:0}
+.pt-banner-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--cream)}
+.pt-banner-sub{font-size:13px;color:rgba(253,250,245,.55);margin-top:2px}
+.pt-card{background:white;border:1px solid var(--sand-dark);border-radius:var(--r);overflow:hidden;margin-bottom:1rem}
+.pt-card-hero{width:100%;height:200px;background:var(--sand);position:relative;overflow:hidden}
+.pt-card-hero img{width:100%;height:100%;object-fit:cover;display:block}
+.pt-hero-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .12s}
+.pt-hero-placeholder:hover{background:var(--sand-mid)}
+.pt-hero-icon{font-size:32px;opacity:.4}
+.pt-hero-text{font-size:12px;color:var(--ink-muted)}
+.pt-card-body{padding:1rem 1.25rem}
+.pt-card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);margin-bottom:4px}
+.pt-card-dates{font-size:12px;color:var(--ink-muted);margin-bottom:12px}
+.pt-rating{display:flex;gap:4px;margin-bottom:10px}
+.pt-star{font-size:20px;cursor:pointer;opacity:.3;transition:opacity .12s}
+.pt-star.lit{opacity:1}
+.pt-star:hover{opacity:.7}
+.pt-review-input{width:100%;padding:8px 12px;background:var(--sand);border:1px solid var(--sand-dark);border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;resize:vertical;min-height:60px;transition:border-color .12s}
+.pt-review-input:focus{border-color:var(--sky);background:white}
+.pt-photo-strip{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.pt-photo-thumb{width:70px;height:70px;border-radius:var(--rsm);object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .12s}
+.pt-photo-thumb:hover{border-color:var(--sky)}
+.pt-add-photo{width:70px;height:70px;border-radius:var(--rsm);background:var(--sand);border:2px dashed var(--sand-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--ink-muted);gap:4px;transition:border-color .12s,background .12s}
+.pt-add-photo:hover{border-color:var(--sky);background:var(--sky-light);color:var(--sky-dark)}
+.pt-add-photo-icon{font-size:20px}
+.pt-transport-card{background:white;border:1px solid var(--sand-dark);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;gap:1rem;align-items:flex-start}
+.pt-trans-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.pt-trans-title{font-size:15px;font-weight:600;color:var(--ink)}
+.pt-trans-meta{font-size:12px;color:var(--ink-muted);margin-top:2px}
+.pt-summary-bar{background:var(--ink);border-radius:var(--r);padding:1.25rem 1.5rem;margin-top:1.5rem;display:flex;gap:2rem;flex-wrap:wrap}
+.pt-sum-item{text-align:center}
+.pt-sum-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--cream)}
+.pt-sum-lbl{font-size:11px;color:rgba(253,250,245,.45);margin-top:2px}
+.photo-upload-input{display:none}
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,20,16,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:2rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--cream);border-radius:var(--rlg);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shm);animation:modal-in .2s ease}
+@keyframes modal-in{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--sand-mid);display:flex;align-items:flex-start;justify-content:space-between;position:sticky;top:0;background:var(--cream);z-index:1}
+.modal-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.modal-close{width:30px;height:30px;border-radius:var(--rsm);background:var(--sand);border:1px solid var(--sand-dark);cursor:pointer;font-size:18px;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:1rem}
+.modal-body{padding:1.25rem 1.5rem 1.5rem}
+.modal-event{background:white;border:1px solid var(--sand-dark);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem}
+.modal-event-type{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.modal-event-title{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.modal-metas{display:flex;flex-wrap:wrap;gap:8px}
+.modal-meta{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--ink-soft);background:var(--sand);padding:4px 10px;border-radius:20px}
+.no-events{color:var(--ink-muted);font-size:14px;font-style:italic;padding:.5rem 0}
+.share-opt{display:flex;align-items:center;gap:14px;padding:1rem 1.25rem;border:1px solid var(--sand-dark);border-radius:var(--r);background:white;cursor:pointer;margin-bottom:10px;transition:border-color .12s,box-shadow .12s}
+.share-opt:hover{border-color:var(--sky);box-shadow:var(--sh)}
+.share-icon{width:44px;height:44px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.share-title{font-size:15px;font-weight:600;color:var(--ink)}.share-desc{font-size:12px;color:var(--ink-muted);margin-top:2px}
+.empty-state{text-align:center;padding:3rem 2rem;background:white;border:2px dashed var(--sand-dark);border-radius:var(--rlg);color:var(--ink-muted)}
+.empty-icon{font-size:40px;margin-bottom:1rem}.empty-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink-soft);margin-bottom:6px}.empty-sub{font-size:14px;line-height:1.6}
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;align-items:center;justify-content:center}
+.lightbox.open{display:flex}
+.lightbox img{max-width:90vw;max-height:90vh;border-radius:var(--r);object-fit:contain}
+.lightbox-close{position:absolute;top:1rem;right:1rem;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* PDF PRINT STYLES */
+@media print {
+  .topbar,.sidebar,.modal-overlay,.lightbox{display:none!important}
+  .main{display:block!important}
+  .content{padding:0!important;overflow:visible!important}
+  .page{display:none!important}
+  #printView{display:block!important}
+  body{background:white;font-size:12pt}
+  .print-page-break{page-break-before:always}
+}
+#printView{display:none}
+/* PRINT VIEW STYLES (visible only during print) */
+.pv-cover{padding:3cm 2cm 2cm;min-height:25cm;display:flex;flex-direction:column}
+.pv-cover-title{font-family:'DM Serif Display',serif;font-size:48pt;color:#1a1410;margin-bottom:.5rem}
+.pv-cover-sub{font-size:14pt;color:#9a9088;margin-bottom:3rem}
+.pv-cover-meta{display:flex;gap:2rem;margin-top:auto}
+.pv-cover-meta-item{font-size:11pt;color:#4a453f}
+.pv-cover-meta-val{font-size:16pt;font-weight:600;color:#1a1410;font-family:'DM Serif Display',serif}
+.pv-divider{border:none;border-top:2px solid #1a1410;margin:1rem 0}
+.pv-stop{margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #d9cfc0}
+.pv-stop-type-label{font-size:9pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem}
+.pv-stop-type-dest{color:#3b7abf}.pv-stop-type-trans{color:#c27a1a}
+.pv-stop-name{font-family:'DM Serif Display',serif;font-size:20pt;color:#1a1410;margin-bottom:.25rem}
+.pv-stop-dates{font-size:10pt;color:#9a9088;margin-bottom:.5rem}
+.pv-stop-meta{display:flex;gap:1.5rem;margin-bottom:.5rem;flex-wrap:wrap}
+.pv-stop-meta-item{font-size:10pt;color:#4a453f}
+.pv-stop-meta-label{font-size:8pt;text-transform:uppercase;letter-spacing:.06em;color:#9a9088;display:block;margin-bottom:1px}
+.pv-stop-notes{font-size:10pt;color:#4a453f;font-style:italic;background:#f5f0e8;padding:.5rem .75rem;border-radius:4pt;border-left:3px solid #3b7abf}
+.pv-status{display:inline-block;font-size:9pt;font-weight:600;padding:2px 8px;border-radius:10pt;margin-left:.5rem}
+.pv-cost-table{width:100%;border-collapse:collapse;margin-top:1rem;font-size:10pt}
+.pv-cost-table td{padding:.4rem .75rem;border-bottom:1px solid #ede6d8}
+.pv-cost-table tr:last-child td{border-bottom:none;font-weight:600;font-size:12pt}
+.pv-docs-section{margin-top:1.5rem;padding-top:1.5rem;border-top:2px solid #1a1410}
+.pv-docs-title{font-family:'DM Serif Display',serif;font-size:18pt;margin-bottom:1rem}
+.pv-doc-row{display:flex;gap:1rem;padding:.5rem 0;border-bottom:1px solid #ede6d8;font-size:10pt;align-items:center}
+.pv-doc-icon{font-size:16pt;flex-shrink:0;width:24pt;text-align:center}
+.pv-doc-name{font-weight:600;color:#1a1410;flex:1}
+.pv-doc-ref{color:#9a9088}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="topbar">
+  <div class="logo">Tripcraft<span class="logo-dot">.</span></div>
+  <input class="trip-name-input" id="tripNameInput" placeholder="Name your trip..." value="Vietnam 2025">
+  <div class="topbar-right">
+    <button class="btn-posttrip" onclick="showPage('posttrip',null);document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});renderPostTrip()">&#127981; Post-trip</button>
+    <button class="btn-ghost" onclick="openShareModal()">&#11014; Export / Share</button>
+  </div>
+</div>
+<div class="main">
+<div class="sidebar">
+  <div class="sidebar-section" style="margin-top:0">Views</div>
+  <button class="nav-item active" onclick="showPage('itinerary',this)"><span class="nav-icon">&#128506;</span> Itinerary</button>
+  <button class="nav-item" onclick="showPage('documents',this);renderDocs()"><span class="nav-icon">&#128193;</span> Documents</button>
+  <button class="nav-item" onclick="showPage('map',this);renderMap()"><span class="nav-icon">&#127758;</span> Map</button>
+  <div class="sidebar-section">Travellers</div>
+  <div class="traveller-chips" id="travellerList">
+    <div class="traveller-chip"><div class="t-avatar" style="background:#d0e5f5;color:#185FA5">DE</div><span>Deven <span style="font-size:10px;color:var(--ink-muted)">(you)</span></span></div>
+  </div>
+  <button class="add-btn-sm" onclick="addTraveller()">+ Add traveller</button>
+  <div class="sidebar-total">
+    <div style="font-size:12px;color:var(--ink-muted);margin-bottom:4px">Trip cost</div>
+    <div style="font-size:20px;font-weight:600;color:var(--ink);font-family:'DM Serif Display',serif" id="sbTotal">£0</div>
+    <div style="font-size:11px;color:var(--ink-muted)" id="sbPer"></div>
+  </div>
+</div>
+<div class="content">
+
+<!-- ITINERARY PAGE -->
+<div class="page active" id="page-itinerary">
+  <div class="cal-header">
+    <div class="cal-title" id="calMonthTitle">December 2025</div>
+    <div class="cal-nav"><button class="cal-nav-btn" onclick="calNav(-1)">&#8249;</button><button class="cal-nav-btn" onclick="calNav(1)">&#8250;</button></div>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--sky)"></div> Destination</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Transport</div>
+  </div>
+  <hr class="section-divider">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <div class="page-title" style="font-size:18px">Timeline</div>
+  </div>
+  <div id="timelineWrap"></div>
+  <hr class="section-divider">
+  <div class="itinerary-toolbar">
+    <div class="page-title">Itinerary</div>
+    <div class="add-btns">
+      <button class="btn-dest" onclick="addStop('destination')">&#128205; + Destination</button>
+      <button class="btn-trans" onclick="addStop('transport')">&#9992; + Transport</button>
+    </div>
+  </div>
+  <div id="stopList"></div>
+  <div id="costSummary" style="display:none">
+    <div class="cost-bar">
+      <div><div class="cost-lbl">Total trip cost</div><div class="cost-val" id="totalCost">£0</div></div>
+      <div class="cost-breakdown">
+        <div><div class="ci-val" id="destCost">£0</div><div class="ci-lbl">Destinations</div></div>
+        <div><div class="ci-val" id="transCost">£0</div><div class="ci-lbl">Transport</div></div>
+        <div><div class="ci-val" id="ppCost">£0</div><div class="ci-lbl" id="ppLbl">Per person</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="fx-bar">
+    <div class="fx-label">&#128178; GBP &#8594; VND</div>
+    <div class="fx-input-wrap"><span class="fx-prefix">£</span><input class="fx-input" type="number" id="fxInput" value="100" oninput="calcFx()"></div>
+    <div class="fx-arrow">&#8594;</div>
+    <div class="fx-result" id="fxResult">—</div>
+    <div class="fx-rate" id="fxRate"><span style="font-style:italic;color:var(--ink-faint)">Fetching rate...</span></div>
+  </div>
+</div>
+
+<!-- DOCUMENTS PAGE -->
+<div class="page" id="page-documents">
+  <div class="docs-page-header">
+    <div class="page-title">Documents</div>
+    <button class="btn-primary" onclick="openAddDocModal()">+ Add document</button>
+  </div>
+  <div class="doc-filter-bar" id="docFilterBar"></div>
+  <div id="docsContent"></div>
+</div>
+
+<!-- MAP PAGE -->
+<div class="page" id="page-map">
+  <div class="docs-page-header"><div class="page-title">Map</div></div>
+  <div class="map-container" id="mapContainer"></div>
+  <div id="mapStopList"></div>
+</div>
+
+<!-- POST-TRIP PAGE -->
+<div class="page" id="page-posttrip">
+  <div id="postTripContent"></div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- PRINT VIEW (hidden, shown only via JS before print) -->
+<div id="printView"></div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">&#10005;</button>
+  <img id="lightboxImg" src="" alt="Photo">
+</div>
+
+<!-- DAY MODAL -->
+<div class="modal-overlay" id="dayModal" onclick="if(event.target===this)closeDayModal()">
+  <div class="modal">
+    <div class="modal-head"><div><div class="modal-title" id="modalDate">Day</div><div style="font-size:13px;color:var(--ink-muted);margin-top:2px" id="modalSub"></div></div><button class="modal-close" onclick="closeDayModal()">&#10005;</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="shareModal" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal">
+    <div class="modal-head"><div><div class="modal-title">Export &amp; Share</div><div style="font-size:13px;color:var(--ink-muted);margin-top:2px">Save or send your trip</div></div><button class="modal-close" onclick="closeShareModal()">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="share-opt" onclick="exportPDF()"><div class="share-icon" style="background:var(--terra-light)">&#128196;</div><div><div class="share-title">Export as PDF travel guide</div><div class="share-desc">Generates a designed, printable itinerary document with all your stops, costs, and documents</div></div></div>
+      <div class="share-opt" onclick="copyShareLink()"><div class="share-icon" style="background:var(--sky-light)">&#128279;</div><div><div class="share-title">Copy share link</div><div class="share-desc">Share a read-only view with your group</div></div></div>
+      <div class="share-opt" onclick="copyText()"><div class="share-icon" style="background:var(--sage-light)">&#128203;</div><div><div class="share-title">Copy as text</div><div class="share-desc">Paste into WhatsApp, email, any group chat</div></div></div>
+      <div class="share-opt"><div class="share-icon" style="background:var(--sand-mid)">&#128197;</div><div><div class="share-title">Export to calendar (.ics)</div><div class="share-desc">Add all stops to Google Calendar or Apple Calendar</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TRAVELLER MODAL -->
+<div class="modal-overlay" id="travellerModal" onclick="if(event.target===this)closeTravellerModal()">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><div class="modal-title">Add traveller</div><button class="modal-close" onclick="closeTravellerModal()">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="ff"><label class="fl">Name</label><input class="fi" id="travellerName" placeholder="e.g. Jamie"></div>
+      <button class="btn-save" style="width:100%" onclick="saveTraveller()">Add to trip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD DOC MODAL -->
+<div class="modal-overlay" id="addDocModal" onclick="if(event.target===this)closeAddDocModal()">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head"><div class="modal-title" id="addDocModalTitle">Add document</div><button class="modal-close" onclick="closeAddDocModal()">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="fg">
+        <div><label class="fl">Document name</label><input class="fi" id="docName" placeholder="e.g. Deven's passport"></div>
+        <div><label class="fl">Category</label><select class="fi" id="docCat"><option value="passport">Passport / ID</option><option value="insurance">Insurance</option><option value="visa">Visa</option><option value="booking">Booking / confirmation</option><option value="other">Other</option></select></div>
+      </div>
+      <div class="fg">
+        <div><label class="fl">Reference / number</label><input class="fi" id="docRef" placeholder="e.g. GB123456789"></div>
+        <div><label class="fl">Expiry date</label><input type="date" class="fi" id="docExpiry"></div>
+      </div>
+      <div class="fg">
+        <div><label class="fl">Link to itinerary stop (optional)</label><select class="fi" id="docStop"><option value="">— None / whole trip —</option></select></div>
+        <div><label class="fl">Link to traveller (optional)</label><select class="fi" id="docTraveller"><option value="">— None / all travellers —</option></select></div>
+      </div>
+      <div class="ff"><label class="fl">Notes</label><textarea class="fi" id="docNotes" placeholder="Any extra info..." rows="2"></textarea></div>
+      <button class="btn-save" style="width:100%;margin-top:4px" onclick="saveDoc()">Save document</button>
+    </div>
+  </div>
+</div>
+
+<!-- STOP DOC MODAL -->
+<div class="modal-overlay" id="stopDocModal" onclick="if(event.target===this)closeStopDocModal()">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><div class="modal-title" id="stopDocTitle">Attach document</div><button class="modal-close" onclick="closeStopDocModal()">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="ff"><label class="fl">Document name</label><input class="fi" id="sdName" placeholder="e.g. Flight confirmation"></div>
+      <div class="fg">
+        <div><label class="fl">Category</label><select class="fi" id="sdCat"><option value="booking">Booking / confirmation</option><option value="passport">Passport / ID</option><option value="insurance">Insurance</option><option value="visa">Visa</option><option value="other">Other</option></select></div>
+        <div><label class="fl">Reference</label><input class="fi" id="sdRef" placeholder="e.g. ABC123"></div>
+      </div>
+      <div class="ff"><label class="fl">Link to traveller (optional)</label><select class="fi" id="sdTraveller"><option value="">— None / all travellers —</option></select></div>
+      <div class="ff"><label class="fl">Notes</label><textarea class="fi" id="sdNotes" rows="2" placeholder=""></textarea></div>
+      <button class="btn-save" style="width:100%" onclick="saveStopDoc()">Attach</button>
+    </div>
+  </div>
+</div>
+
+<!-- hidden file inputs -->
+<input type="file" id="heroUpload" class="photo-upload-input" accept="image/*" onchange="handleHeroUpload(event)">
+<input type="file" id="photoUpload" class="photo-upload-input" accept="image/*" multiple onchange="handlePhotoUpload(event)">
+
+<script>
+var stops=[],docs=[],travellers=['Deven'],calYear=2025,calMonth=11,dragSrc=null,stopCtr=0,docCtr=0,curStopDoc=null,fxRate=null;
+var curHeroStopId=null,curPhotoStopId=null;
+var docFilter={type:'category',value:null}; // type: 'category','stop','traveller'
+var AV=[['#d0e5f5','#185FA5'],['#e8f2eb','#2a4a36'],['#faeeda','#8a5a0a'],['#faeee6','#8a3a18'],['#fae8ee','#7a2040'],['#ede6d8','#4a453f']];
+var SC=['tbc','confirm','booked','cancelled'];
+var SL={tbc:'TBC',confirm:'To confirm',booked:'Booked',cancelled:'Cancelled'};
+var SK={tbc:'s-tbc',confirm:'s-confirm',booked:'s-booked',cancelled:'s-cancelled'};
+var DI={passport:'🛂',insurance:'🏥',visa:'📋',booking:'🏨',other:'📎'};
+var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+function addStop(type){
+  var id=++stopCtr;
+  stops.push({id:id,type:type,name:'',dateFrom:'',dateTo:'',status:'tbc',
+    accommodation:'',accommodationCost:'',activitiesCost:'',foodCost:'',notes:'',
+    from:'',to:'',carrier:'',departure:'',arrival:'',bookingRef:'',transportCost:'',
+    stopDocs:[],heroImage:null,photos:[],rating:0,review:''});
+  renderStops();renderTimeline();
+  setTimeout(function(){
+    var f=document.getElementById('form-'+id),b=document.getElementById('btn-'+id);
+    if(f){f.classList.add('open');b.classList.add('open');}
+    var n=document.getElementById(type==='destination'?'name-'+id:'from-'+id);
+    if(n)n.focus();
+  },50);
+}
+function removeStop(id){stops=stops.filter(function(s){return s.id!==id;});renderStops();renderCalendar();renderTimeline();updateCosts();}
+function moveStop(idx,dir){var ni=idx+dir;if(ni<0||ni>=stops.length)return;var t=stops[idx];stops[idx]=stops[ni];stops[ni]=t;renderStops();renderCalendar();renderTimeline();}
+function cycleStatus(id){var s=fS(id);if(!s)return;var i=SC.indexOf(s.status);s.status=SC[(i+1)%SC.length];renderStops();}
+function updateStatus(id,v){var s=fS(id);if(s)s.status=v;}
+function fS(id){for(var i=0;i<stops.length;i++)if(stops[i].id===id)return stops[i];return null;}
+function g(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function saveStop(id){
+  var s=fS(id);if(!s)return;
+  if(s.type==='destination'){s.name=g('name-'+id);s.dateFrom=g('dateFrom-'+id);s.dateTo=g('dateTo-'+id);s.accommodation=g('accommodation-'+id);s.accommodationCost=g('accommodationCost-'+id);s.activitiesCost=g('activitiesCost-'+id);s.foodCost=g('foodCost-'+id);s.notes=g('notes-'+id);}
+  else{s.from=g('from-'+id);s.to=g('to-'+id);s.carrier=g('carrier-'+id);s.dateFrom=g('dateFrom-'+id);s.departure=g('departure-'+id);s.arrival=g('arrival-'+id);s.bookingRef=g('bookingRef-'+id);s.transportCost=g('transportCost-'+id);s.name=s.from&&s.to?s.from+' \u2192 '+s.to:(s.from||s.to||'Transport');}
+  document.getElementById('form-'+id).classList.remove('open');
+  document.getElementById('btn-'+id).classList.remove('open');
+  renderStops();renderCalendar();renderTimeline();updateCosts();
+}
+function toggleForm(id){document.getElementById('form-'+id).classList.toggle('open');document.getElementById('btn-'+id).classList.toggle('open');}
+function sCost(s){if(s.type==='destination')return(parseFloat(s.accommodationCost)||0)+(parseFloat(s.activitiesCost)||0)+(parseFloat(s.foodCost)||0);return parseFloat(s.transportCost)||0;}
+function fC(n){return n===0?'—':'£'+n.toLocaleString('en-GB',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fD(str){if(!str)return'';var d=new Date(str+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function nts(a,b){if(!a||!b)return null;var d=Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);return d>0?d:null;}
+function toDS(d){return d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate());}
+function pd(n){return String(n).padStart(2,'0');}
+
+function renderStops(){
+  var list=document.getElementById('stopList');
+  if(stops.length===0){list.innerHTML='<div class="empty-state"><div class="empty-icon">✈️</div><div class="empty-title">Your itinerary is empty</div><div class="empty-sub">Add a destination or transport leg above to start building your trip.</div></div>';updateCosts();return;}
+  list.innerHTML=stops.map(function(s,idx){return renderCard(s,idx);}).join('');
+  updateCosts();
+  list.querySelectorAll('.stop-card').forEach(function(card,idx){
+    card.addEventListener('dragstart',function(e){dragSrc=idx;card.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragend',function(){card.classList.remove('dragging');list.querySelectorAll('.stop-card').forEach(function(c){c.classList.remove('drag-over');});});
+    card.addEventListener('dragover',function(e){e.preventDefault();card.classList.add('drag-over');});
+    card.addEventListener('dragleave',function(){card.classList.remove('drag-over');});
+    card.addEventListener('drop',function(e){e.preventDefault();card.classList.remove('drag-over');if(dragSrc!==null&&dragSrc!==idx){var m=stops.splice(dragSrc,1)[0];stops.splice(idx,0,m);renderStops();renderCalendar();renderTimeline();}});
+  });
+}
+
+function renderCard(s,idx){
+  var cost=sCost(s),sc=SK[s.status],sl=SL[s.status];
+  var dn=s.name||(s.type==='destination'?'New destination':'New transport');
+  var ds='';
+  if(s.dateFrom){ds=fD(s.dateFrom);if(s.type==='destination'&&s.dateTo){var n=nts(s.dateFrom,s.dateTo);ds+=' \u2192 '+fD(s.dateTo)+(n?' · '+n+' night'+(n>1?'s':''):'');}else if(s.type==='transport'&&s.departure){ds+=' · '+s.departure+(s.arrival?' \u2192 '+s.arrival:'');}}
+  var sdocs=s.stopDocs||[];
+  var docsHtml=sdocs.length>0?sdocs.map(function(d){return'<div class="doc-chip"><div class="doc-chip-icon">'+(DI[d.cat]||'📎')+'</div><div style="flex:1;min-width:0"><div class="doc-chip-name">'+esc(d.name)+'</div><div class="doc-chip-ref">'+(d.ref?'Ref: '+esc(d.ref):'No reference')+'</div></div><button class="doc-chip-del" onclick="removeStopDoc('+s.id+','+d.id+')">✕</button></div>';}).join(''):'<div class="doc-empty">No documents attached yet</div>';
+  var fc=s.type==='destination'?
+    '<div class="fg"><div><label class="fl">Destination name</label><input class="fi" id="name-'+s.id+'" value="'+esc(s.name)+'" placeholder="e.g. Hanoi, Vietnam"></div><div><label class="fl">Status</label><select class="fi" onchange="updateStatus('+s.id+',this.value)"><option value="tbc"'+(s.status==='tbc'?' selected':'')+'>TBC</option><option value="confirm"'+(s.status==='confirm'?' selected':'')+'>To confirm</option><option value="booked"'+(s.status==='booked'?' selected':'')+'>Booked</option><option value="cancelled"'+(s.status==='cancelled'?' selected':'')+'>Cancelled</option></select></div></div>'+
+    '<div class="fg"><div><label class="fl">Arrival date</label><input type="date" class="fi" id="dateFrom-'+s.id+'" value="'+s.dateFrom+'"></div><div><label class="fl">Departure date</label><input type="date" class="fi" id="dateTo-'+s.id+'" value="'+s.dateTo+'"></div></div>'+
+    '<div class="ff"><label class="fl">Accommodation</label><input class="fi" id="accommodation-'+s.id+'" value="'+esc(s.accommodation)+'" placeholder="e.g. Sofitel Legend Metropole"></div>'+
+    '<div class="fg3"><div><label class="fl">Accommodation £</label><div class="pw"><span class="pp">£</span><input type="number" class="fi" id="accommodationCost-'+s.id+'" value="'+s.accommodationCost+'" placeholder="0"></div></div><div><label class="fl">Activities £</label><div class="pw"><span class="pp">£</span><input type="number" class="fi" id="activitiesCost-'+s.id+'" value="'+s.activitiesCost+'" placeholder="0"></div></div><div><label class="fl">Food &amp; drink £</label><div class="pw"><span class="pp">£</span><input type="number" class="fi" id="foodCost-'+s.id+'" value="'+s.foodCost+'" placeholder="0"></div></div></div>'+
+    '<div class="ff"><label class="fl">Notes / things to do</label><textarea class="fi" id="notes-'+s.id+'" placeholder="Restaurants, must-sees, vibes...">'+esc(s.notes)+'</textarea></div>'
+    :
+    '<div class="fg"><div><label class="fl">From</label><input class="fi" id="from-'+s.id+'" value="'+esc(s.from)+'" placeholder="e.g. London Heathrow"></div><div><label class="fl">To</label><input class="fi" id="to-'+s.id+'" value="'+esc(s.to)+'" placeholder="e.g. Hanoi"></div></div>'+
+    '<div class="fg"><div><label class="fl">Carrier / service</label><input class="fi" id="carrier-'+s.id+'" value="'+esc(s.carrier)+'" placeholder="e.g. Vietnam Airlines"></div><div><label class="fl">Status</label><select class="fi" onchange="updateStatus('+s.id+',this.value)"><option value="tbc"'+(s.status==='tbc'?' selected':'')+'>TBC</option><option value="confirm"'+(s.status==='confirm'?' selected':'')+'>To confirm</option><option value="booked"'+(s.status==='booked'?' selected':'')+'>Booked</option><option value="cancelled"'+(s.status==='cancelled'?' selected':'')+'>Cancelled</option></select></div></div>'+
+    '<div class="fg3"><div><label class="fl">Date</label><input type="date" class="fi" id="dateFrom-'+s.id+'" value="'+s.dateFrom+'"></div><div><label class="fl">Departs</label><input type="time" class="fi" id="departure-'+s.id+'" value="'+s.departure+'"></div><div><label class="fl">Arrives</label><input type="time" class="fi" id="arrival-'+s.id+'" value="'+s.arrival+'"></div></div>'+
+    '<div class="fg"><div><label class="fl">Booking reference</label><input class="fi" id="bookingRef-'+s.id+'" value="'+esc(s.bookingRef)+'" placeholder="e.g. ABC123"></div><div><label class="fl">Total cost £</label><div class="pw"><span class="pp">£</span><input type="number" class="fi" id="transportCost-'+s.id+'" value="'+s.transportCost+'" placeholder="0"></div></div></div>';
+  return '<div class="stop-card" id="card-'+s.id+'" draggable="true">'+
+    '<div class="stop-header">'+
+    '<div class="drag-handle" title="Drag to reorder"><div class="drag-dots">'+Array(6).fill('<div class="drag-dot"></div>').join('')+'</div></div>'+
+    '<div class="type-bar '+(s.type==='destination'?'type-dest':'type-trans')+'"></div>'+
+    '<div class="stop-main" onclick="toggleForm('+s.id+')">'+
+    '<div class="stop-icon '+(s.type==='destination'?'icon-dest':'icon-trans')+'">'+(s.type==='destination'?'📍':'✈️')+'</div>'+
+    '<div class="stop-info"><div class="stop-name">'+dn+'</div><div class="stop-dates">'+(ds||'<span style="color:var(--ink-faint);font-style:italic">No dates set</span>')+'</div></div>'+
+    '</div>'+
+    '<div class="stop-right">'+
+    '<div class="stop-cost'+(cost===0?' zero':'')+'">'+(cost===0?'No cost':fC(cost))+'</div>'+
+    '<button class="status-pill '+sc+'" onclick="cycleStatus('+s.id+')" title="Click to cycle">'+sl+'</button>'+
+    '<div class="reorder-btns"><button class="reorder-btn" onclick="moveStop('+idx+',-1)"'+(idx===0?' disabled':'')+'>▲</button><button class="reorder-btn" onclick="moveStop('+idx+',1)"'+(idx===stops.length-1?' disabled':'')+'>▼</button></div>'+
+    '<button class="expand-btn" id="btn-'+s.id+'" onclick="toggleForm('+s.id+')">▾</button>'+
+    '</div></div>'+
+    '<div class="stop-form" id="form-'+s.id+'">'+fc+
+    '<div class="stop-docs-wrap"><div class="stop-docs-head"><div class="stop-docs-title">📎 Attached documents</div><button class="btn-attach" onclick="openStopDocModal('+s.id+')">+ Attach</button></div><div id="sdl-'+s.id+'">'+docsHtml+'</div></div>'+
+    '<div class="form-footer"><button class="btn-del" onclick="removeStop('+s.id+')">🗑 Remove</button><button class="btn-save" onclick="saveStop('+s.id+')">Save &amp; close</button></div>'+
+    '</div></div>';
+}
+
+function updateCosts(){
+  var total=stops.reduce(function(a,s){return a+sCost(s);},0);
+  var dest=stops.filter(function(s){return s.type==='destination';}).reduce(function(a,s){return a+sCost(s);},0);
+  var trans=stops.filter(function(s){return s.type==='transport';}).reduce(function(a,s){return a+sCost(s);},0);
+  var n=travellers.length||1;
+  document.getElementById('costSummary').style.display=stops.length>0?'block':'none';
+  document.getElementById('totalCost').textContent='£'+total.toLocaleString('en-GB');
+  document.getElementById('destCost').textContent='£'+dest.toLocaleString('en-GB');
+  document.getElementById('transCost').textContent='£'+trans.toLocaleString('en-GB');
+  document.getElementById('ppCost').textContent='£'+Math.round(total/n).toLocaleString('en-GB');
+  document.getElementById('ppLbl').textContent='Per person ('+n+')';
+  document.getElementById('sbTotal').textContent='£'+total.toLocaleString('en-GB');
+  document.getElementById('sbPer').textContent=n>1?'£'+Math.round(total/n).toLocaleString('en-GB')+' per person':'';
+}
+
+function calNav(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+function renderCalendar(){
+  document.getElementById('calMonthTitle').textContent=MN[calMonth]+' '+calYear;
+  var grid=document.getElementById('calGrid');
+  var html=DW.map(function(d){return'<div class="cal-dow">'+d+'</div>';}).join('');
+  var fd=new Date(calYear,calMonth,1);var sd=fd.getDay();sd=sd===0?6:sd-1;
+  var dim=new Date(calYear,calMonth+1,0).getDate();var today=new Date();var em={};
+  stops.forEach(function(s){if(!s.dateFrom)return;if(s.type==='transport'){addEM(em,s.dateFrom,s);}else{var from=new Date(s.dateFrom+'T00:00:00');var to=s.dateTo?new Date(s.dateTo+'T00:00:00'):from;for(var d=new Date(from);d<=to;d.setDate(d.getDate()+1))addEM(em,toDS(d),s);}});
+  for(var i=0;i<sd;i++)html+='<div class="cal-cell empty"></div>';
+  for(var day=1;day<=dim;day++){
+    var ds=calYear+'-'+pd(calMonth+1)+'-'+pd(day);
+    var isT=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===day;
+    var evs=em[ds]||[];var hd=evs.some(function(e){return e.type==='destination';});var ht=evs.some(function(e){return e.type==='transport';});
+    var cls='cal-cell';if(isT)cls+=' today';if(hd&&ht)cls+=' has-both';else if(hd)cls+=' has-dest';else if(ht)cls+=' has-trans';
+    var pills='';evs.slice(0,2).forEach(function(e){pills+='<div class="cal-event-pill '+(e.type==='destination'?'pill-dest':'pill-trans')+'">'+(e.name||'—').slice(0,13)+'</div>';});
+    if(evs.length>2)pills+='<div class="cal-event-pill" style="background:var(--sand);color:var(--ink-muted);border:none">+'+(evs.length-2)+'</div>';
+    html+='<div class="'+cls+'" onclick="openDayModal(\''+ds+'\')"><div class="cal-day-num">'+day+'</div>'+pills+'</div>';
+  }
+  grid.innerHTML=html;
+}
+function addEM(m,ds,s){if(!m[ds])m[ds]=[];if(!m[ds].find(function(e){return e.id===s.id;}))m[ds].push(s);}
+
+function renderTimeline(){
+  var wrap=document.getElementById('timelineWrap');
+  var dated=stops.filter(function(s){return s.dateFrom;});
+  if(dated.length===0){wrap.innerHTML='<div class="timeline-empty">Add dates to your stops to see the full trip timeline.</div>';return;}
+  var allD=[];dated.forEach(function(s){allD.push(s.dateFrom);if(s.dateTo)allD.push(s.dateTo);});
+  var minD=new Date(allD.reduce(function(a,b){return a<b?a:b;})+'T00:00:00');
+  var maxD=new Date(allD.reduce(function(a,b){return a>b?a:b;})+'T00:00:00');
+  var total=Math.max(1,Math.round((maxD-minD)/86400000));
+  function pct(ds){if(!ds)return 0;return Math.max(0,Math.min(100,Math.round((new Date(ds+'T00:00:00')-minD)/86400000/total*100)));}
+  var bars='';
+  dated.forEach(function(s){
+    var l=pct(s.dateFrom);var r=s.dateTo?pct(s.dateTo):Math.min(100,l+Math.max(1,Math.round(1/total*100)));var w=Math.max(0.5,r-l);
+    bars+='<div class="timeline-bar '+(s.type==='destination'?'tbar-dest':'tbar-trans')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(s.name||'')+'" onclick="toggleForm('+s.id+')">'+(w>8?(s.name||(s.type==='destination'?'Dest':'Trans')):'')+'</div>';
+  });
+  var mid=new Date(minD.getTime()+(maxD.getTime()-minD.getTime())/2);
+  var lbls=[minD,mid,maxD].map(function(d){var p=Math.round((d-minD)/86400000/total*100);return'<div class="tdate-label" style="left:'+p+'%">'+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+'</div>';}).join('');
+  wrap.innerHTML='<div class="timeline-dates">'+lbls+'</div><div class="timeline-track">'+bars+'</div>';
+}
+
+async function fetchFxRate(){
+  try{var res=await fetch('https://api.exchangerate-api.com/v4/latest/GBP');var data=await res.json();fxRate=data.rates&&data.rates.VND;if(fxRate){document.getElementById('fxRate').innerHTML='1 GBP = <span>'+Math.round(fxRate).toLocaleString('en-GB')+' VND</span>';calcFx();}}
+  catch(e){fxRate=32500;document.getElementById('fxRate').innerHTML='1 GBP \u2248 <span>'+Math.round(fxRate).toLocaleString('en-GB')+' VND</span> <span style="font-size:10px;color:var(--ink-faint)">(approx)</span>';calcFx();}
+}
+function calcFx(){var inp=parseFloat(document.getElementById('fxInput').value)||0;var res=document.getElementById('fxResult');if(!fxRate){res.textContent='—';return;}res.textContent=Math.round(inp*fxRate).toLocaleString('vi-VN')+' ₫';}
+
+function openDayModal(ds){
+  var d=new Date(ds+'T00:00:00');document.getElementById('modalDate').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var evs=stops.filter(function(s){if(!s.dateFrom)return false;if(s.type==='transport')return s.dateFrom===ds;var from=new Date(s.dateFrom+'T00:00:00'),to=s.dateTo?new Date(s.dateTo+'T00:00:00'):from,check=new Date(ds+'T00:00:00');return check>=from&&check<=to;});
+  document.getElementById('modalSub').textContent=evs.length>0?(evs.length+' item'+(evs.length>1?'s':'')):'No plans yet';
+  if(evs.length===0){document.getElementById('modalBody').innerHTML='<p class="no-events">Nothing scheduled here yet.</p>';}
+  else{document.getElementById('modalBody').innerHTML=evs.map(function(s){var isDest=s.type==='destination';var cost=sCost(s);var metas='';if(isDest){if(s.dateFrom)metas+='<div class="modal-meta">📅 '+fD(s.dateFrom)+(s.dateTo?' \u2192 '+fD(s.dateTo):'')+'</div>';if(s.accommodation)metas+='<div class="modal-meta">🏨 '+esc(s.accommodation)+'</div>';if(cost>0)metas+='<div class="modal-meta">💷 '+fC(cost)+'</div>';if(s.notes)metas+='<div class="modal-meta" style="flex-basis:100%">📝 '+esc(s.notes)+'</div>';}else{if(s.from||s.to)metas+='<div class="modal-meta">🛫 '+(s.from||'?')+' \u2192 '+(s.to||'?')+'</div>';if(s.carrier)metas+='<div class="modal-meta">✈ '+esc(s.carrier)+'</div>';if(s.departure)metas+='<div class="modal-meta">🕐 '+s.departure+(s.arrival?' \u2192 '+s.arrival:'')+'</div>';if(s.bookingRef)metas+='<div class="modal-meta">🔖 Ref: '+esc(s.bookingRef)+'</div>';if(cost>0)metas+='<div class="modal-meta">💷 '+fC(cost)+'</div>';}
+  return'<div class="modal-event"><div class="modal-event-type" style="color:'+(isDest?'var(--sky)':'var(--amber)')+';">'+(isDest?'📍 Destination':'✈ Transport')+' <span class="status-pill '+SK[s.status]+'" style="font-size:10px;padding:2px 7px;cursor:default">'+SL[s.status]+'</span></div><div class="modal-event-title">'+(s.name||(isDest?'Unnamed destination':'Unnamed transport'))+'</div><div class="modal-metas">'+(metas||'<span style="color:var(--ink-muted);font-size:13px;font-style:italic">No details added yet</span>')+'</div></div>';}).join('');}
+  document.getElementById('dayModal').classList.add('open');
+}
+function closeDayModal(){document.getElementById('dayModal').classList.remove('open');}
+
+/* ── DOCUMENTS ── */
+function renderDocFilterBar(){
+  var bar=document.getElementById('docFilterBar');var html='';
+  html+='<button class="filter-chip'+(docFilter.type==='category'&&!docFilter.value?' active':'')+'" onclick="setDocFilter(\'category\',null)">All</button>';
+  stops.filter(function(s){return s.name;}).forEach(function(s){
+    var active=docFilter.type==='stop'&&docFilter.value===s.id;
+    html+='<button class="filter-chip'+(active?' active-stop':'')+'" onclick="setDocFilter(\'stop\','+s.id+')">'+(s.type==='destination'?'📍':'✈️')+' '+(s.name.split(',')[0].split(' ').slice(0,2).join(' '))+'</button>';
+  });
+  travellers.forEach(function(t,i){
+    var active=docFilter.type==='traveller'&&docFilter.value===t;
+    html+='<button class="filter-chip'+(active?' active-traveller':'')+'" onclick="setDocFilter(\'traveller\',\''+t+'\')">'+'👤 '+t+'</button>';
+  });
+  bar.innerHTML=html;
+}
+function setDocFilter(type,value){docFilter={type:type,value:value};renderDocs();}
+
+function renderDocs(){
+  renderDocFilterBar();
+  var content=document.getElementById('docsContent');
+  var filtered=docs.filter(function(d){
+    if(docFilter.type==='stop'&&docFilter.value!=null)return parseInt(d.stopId)===docFilter.value;
+    if(docFilter.type==='traveller'&&docFilter.value)return d.traveller===docFilter.value;
+    return true;
+  });
+  if(docFilter.type==='category'&&!docFilter.value){
+    var cats=['passport','insurance','visa','booking','other'];
+    var catLabels={passport:'🛂 Passports & ID',insurance:'🏥 Insurance',visa:'📋 Visas',booking:'🏨 Bookings & confirmations',other:'📎 Other'};
+    content.innerHTML=cats.map(function(cat){
+      var cd=filtered.filter(function(d){return d.cat===cat;});
+      return'<div class="doc-category"><div class="doc-cat-title">'+catLabels[cat]+'</div>'+(cd.length===0?'<div class="doc-empty-cat">No '+cat+' documents yet</div>':cd.map(function(d){return renderDocCard(d);}).join(''))+'</div>';
+    }).join('');
+  } else {
+    if(filtered.length===0){content.innerHTML='<div class="doc-empty-cat" style="margin-top:.5rem">No documents match this filter</div>';return;}
+    content.innerHTML=filtered.map(function(d){return renderDocCard(d);}).join('');
+  }
+}
+
+function renderDocCard(d){
+  var exp=getExp(d.expiry);
+  var stopName=d.stopId?getSN(parseInt(d.stopId)):'';
+  var tags='';
+  if(stopName)tags+='<span class="doc-tag dtag-stop">'+esc(stopName.split(',')[0].split(' ').slice(0,2).join(' '))+'</span>';
+  if(d.traveller)tags+='<span class="doc-tag dtag-person">'+esc(d.traveller)+'</span>';
+  return'<div class="doc-card"><div class="doc-card-icon">'+(DI[d.cat]||'📎')+'</div><div style="flex:1;min-width:0"><div class="doc-card-name">'+esc(d.name)+'</div><div class="doc-card-meta">'+(d.ref?'Ref: '+esc(d.ref):'')+(d.ref&&d.notes?' · ':'')+(d.notes?esc(d.notes):(!d.ref?'No reference':''))+'</div>'+(tags?'<div class="doc-card-tags">'+tags+'</div>':'')+'</div>'+(d.expiry?'<span class="'+exp.cls+'">'+exp.label+'</span>':'')+'<button class="doc-card-del" onclick="removeDoc('+d.id+')">🗑</button></div>';
+}
+function getExp(e){if(!e)return{cls:'exp-none',label:'No expiry'};var exp=new Date(e+'T00:00:00'),now=new Date(),days=Math.round((exp-now)/86400000);if(days<0)return{cls:'exp-over',label:'Expired'};if(days<180)return{cls:'exp-soon',label:'Expires '+fD(e)};return{cls:'exp-ok',label:'Valid to '+fD(e)};}
+function getSN(id){var s=fS(id);return s?s.name||(s.type==='destination'?'Destination':'Transport'):'';}
+function removeDoc(id){docs=docs.filter(function(d){return d.id!==id;});renderDocs();}
+
+function openAddDocModal(){
+  var sel=document.getElementById('docStop');
+  sel.innerHTML='<option value="">— None / whole trip —</option>';
+  stops.forEach(function(s){sel.innerHTML+='<option value="'+s.id+'">'+(s.name||(s.type==='destination'?'Destination':'Transport'))+'</option>';});
+  var tsel=document.getElementById('docTraveller');
+  tsel.innerHTML='<option value="">— None / all travellers —</option>';
+  travellers.forEach(function(t){tsel.innerHTML+='<option value="'+t+'">'+t+'</option>';});
+  ['docName','docRef','docExpiry','docNotes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('addDocModal').classList.add('open');
+  setTimeout(function(){document.getElementById('docName').focus();},100);
+}
+function closeAddDocModal(){document.getElementById('addDocModal').classList.remove('open');}
+function saveDoc(){
+  var name=document.getElementById('docName').value.trim();if(!name)return;
+  docs.push({id:++docCtr,name:name,cat:document.getElementById('docCat').value,ref:document.getElementById('docRef').value.trim(),expiry:document.getElementById('docExpiry').value,notes:document.getElementById('docNotes').value.trim(),stopId:document.getElementById('docStop').value,traveller:document.getElementById('docTraveller').value});
+  closeAddDocModal();renderDocs();
+}
+
+function openStopDocModal(stopId){
+  curStopDoc=stopId;var s=fS(stopId);
+  document.getElementById('stopDocTitle').textContent='Attach doc to '+(s&&s.name?s.name:'this stop');
+  ['sdName','sdRef','sdNotes'].forEach(function(id){document.getElementById(id).value='';});
+  var tsel=document.getElementById('sdTraveller');
+  tsel.innerHTML='<option value="">— None / all travellers —</option>';
+  travellers.forEach(function(t){tsel.innerHTML+='<option value="'+t+'">'+t+'</option>';});
+  document.getElementById('stopDocModal').classList.add('open');
+  setTimeout(function(){document.getElementById('sdName').focus();},100);
+}
+function closeStopDocModal(){document.getElementById('stopDocModal').classList.remove('open');}
+function saveStopDoc(){
+  var name=document.getElementById('sdName').value.trim();if(!name||!curStopDoc)return;
+  var s=fS(curStopDoc);if(!s)return;if(!s.stopDocs)s.stopDocs=[];
+  var id=++docCtr;var cat=document.getElementById('sdCat').value;var ref=document.getElementById('sdRef').value.trim();var notes=document.getElementById('sdNotes').value.trim();var trav=document.getElementById('sdTraveller').value;
+  s.stopDocs.push({id:id,name:name,cat:cat,ref:ref,notes:notes});
+  docs.push({id:id,name:name,cat:cat,ref:ref,expiry:'',notes:notes,stopId:String(curStopDoc),traveller:trav});
+  closeStopDocModal();refreshSDL(curStopDoc);renderDocs();
+}
+function removeStopDoc(stopId,docId){var s=fS(stopId);if(!s)return;s.stopDocs=s.stopDocs.filter(function(d){return d.id!==docId;});docs=docs.filter(function(d){return d.id!==docId;});refreshSDL(stopId);renderDocs();}
+function refreshSDL(stopId){var s=fS(stopId);if(!s)return;var el=document.getElementById('sdl-'+stopId);if(!el)return;var sd=s.stopDocs||[];el.innerHTML=sd.length===0?'<div class="doc-empty">No documents attached yet</div>':sd.map(function(d){return'<div class="doc-chip"><div class="doc-chip-icon">'+(DI[d.cat]||'📎')+'</div><div style="flex:1;min-width:0"><div class="doc-chip-name">'+esc(d.name)+'</div><div class="doc-chip-ref">'+(d.ref?'Ref: '+esc(d.ref):'No reference')+'</div></div><button class="doc-chip-del" onclick="removeStopDoc('+stopId+','+d.id+')">✕</button></div>';}).join('');}
+
+/* ── MAP ── */
+function renderMap(){
+  var container=document.getElementById('mapContainer');
+  var destS=stops.filter(function(s){return s.type==='destination'&&s.name;});
+  if(destS.length===0){container.innerHTML='<div class="map-placeholder"><div class="map-ph-icon">🌍</div><div class="map-ph-title">No destinations yet</div><div class="map-ph-sub">Add destinations to your itinerary and they\'ll appear here.</div></div>';document.getElementById('mapStopList').innerHTML='';return;}
+  var known={'Hanoi':[105.85,21.03],'Ho Chi Minh City':[106.66,10.82],'Saigon':[106.66,10.82],'HCMC':[106.66,10.82],'Hoi An':[108.33,15.88],'Da Nang':[108.22,16.07],'Hue':[107.59,16.46],'Ha Long Bay':[107.08,20.91],'Nha Trang':[109.19,12.24],'Dubrovnik':[18.09,42.64],'Kotor':[18.77,42.42],'Budva':[18.84,42.28],'London':[-.12,51.51],'Paris':[2.35,48.85],'Rome':[12.49,41.9],'Bangkok':[100.52,13.75],'Chiang Mai':[98.99,18.79],'Tokyo':[139.69,35.68],'Kyoto':[135.77,35.01],'Osaka':[135.5,34.69],'Barcelona':[2.17,41.38],'Madrid':[-3.7,40.42],'Lisbon':[-9.14,38.72],'Amsterdam':[4.9,52.37],'Berlin':[13.4,52.52],'Vienna':[16.37,48.21],'Singapore':[103.8,1.35],'Bali':[115.19,-8.67],'Phuket':[98.39,7.88],'Siem Reap':[103.86,13.36],'Phnom Penh':[104.92,11.57]};
+  var coords=destS.map(function(s){var k=Object.keys(known).find(function(k){return s.name.toLowerCase().includes(k.toLowerCase());});return k?known[k]:null;});
+  var valid=coords.filter(function(c){return c!==null;});
+  if(valid.length<2){container.innerHTML='<div class="map-placeholder"><div class="map-ph-icon">📍</div><div class="map-ph-title">Route map</div><div class="map-ph-sub">Destinations listed below. In production this renders a full interactive map with your route.</div></div>';}
+  else{var W=680,H=320,P=50;var lons=valid.map(function(c){return c[0];}),lats=valid.map(function(c){return c[1];});var minLon=Math.min.apply(null,lons)-3,maxLon=Math.max.apply(null,lons)+3;var minLat=Math.min.apply(null,lats)-3,maxLat=Math.max.apply(null,lats)+3;function sx(c){return(c[0]-minLon)/(maxLon-minLon)*(W-P*2)+P;}function sy(c){return(1-(c[1]-minLat)/(maxLat-minLat))*(H-P*2)+P;}var pts=valid.map(function(c){return[sx(c),sy(c)];});var pathD=pts.map(function(p,i){return(i===0?'M':'L')+p[0]+','+p[1];}).join(' ');var dots=pts.map(function(p,i){var si=destS[coords.indexOf(valid[i])];return'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="9" fill="#3b7abf" stroke="white" stroke-width="2.5"/><text x="'+p[0]+'" y="'+(p[1]-15)+'" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#1a1410">'+((si.name||'').slice(0,14))+'</text>';}).join('');container.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block"><rect width="'+W+'" height="'+H+'" fill="#e8f0f9"/><path d="'+pathD+'" stroke="#3b7abf" stroke-width="2.5" stroke-dasharray="7,5" fill="none" opacity=".65"/>'+dots+'</svg>';}
+  document.getElementById('mapStopList').innerHTML=stops.filter(function(s){return s.name||s.dateFrom;}).map(function(s,i){var isDest=s.type==='destination';return'<div class="map-stop-row"><div class="map-num'+(isDest?'':' trans')+'">'+(i+1)+'</div><div style="flex:1"><div class="map-stop-name">'+(s.name||(isDest?'Destination':'Transport'))+'</div><div class="map-stop-date">'+fD(s.dateFrom)+(s.dateTo&&isDest?' \u2192 '+fD(s.dateTo):'')+'</div></div><span class="status-pill '+SK[s.status]+'" style="cursor:default">'+SL[s.status]+'</span></div>';}).join('');
+}
+
+/* ── POST-TRIP ── */
+function renderPostTrip(){
+  var content=document.getElementById('postTripContent');
+  var tripName=document.getElementById('tripNameInput').value||'Your Trip';
+  var total=stops.reduce(function(a,s){return a+sCost(s);},0);
+  var destStops=stops.filter(function(s){return s.type==='destination';});
+  var nights=destStops.reduce(function(a,s){return a+(nts(s.dateFrom,s.dateTo)||0);},0);
+  var html='<div class="posttrip-banner"><div class="pt-banner-icon">📸</div><div><div class="pt-banner-title">'+esc(tripName)+' — Post-trip</div><div class="pt-banner-sub">Upload photos, rate each stop, and leave a note on how it actually went.</div></div></div>';
+  if(stops.length===0){html+='<div class="empty-state"><div class="empty-icon">🏖️</div><div class="empty-title">No stops yet</div><div class="empty-sub">Build your itinerary first, then come back here after the trip to add photos and memories.</div></div>';content.innerHTML=html;return;}
+  stops.forEach(function(s){
+    if(s.type==='destination'){
+      var heroHtml=s.heroImage?'<img src="'+s.heroImage+'" alt="'+esc(s.name)+'"><div style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px;background:linear-gradient(transparent,rgba(0,0,0,.5))"><div style="font-family:DM Serif Display,serif;font-size:16px;color:white;font-weight:400">'+esc(s.name)+'</div></div>':'<div class="pt-hero-placeholder" onclick="triggerHeroUpload('+s.id+')"><div class="pt-hero-icon">🖼</div><div class="pt-hero-text">Click to add hero photo</div></div>';
+      var starsHtml=Array(5).fill(0).map(function(_,i){return'<span class="pt-star'+(i<s.rating?' lit':'')+'\" onclick=\"setRating('+s.id+','+(i+1)+')">★</span>';}).join('');
+      var photosHtml=(s.photos||[]).map(function(p){return'<img class="pt-photo-thumb" src="'+p+'" alt="" onclick="openLightbox(\''+p+'\')">';}).join('');
+      photosHtml+='<div class="pt-add-photo" onclick="triggerPhotoUpload('+s.id+')"><div class="pt-add-photo-icon">+</div><div>Add photo</div></div>';
+      html+='<div class="pt-card">'+
+        '<div class="pt-card-hero">'+(s.heroImage?'<div style="position:relative;width:100%;height:100%">'+heroHtml+'<button onclick="triggerHeroUpload('+s.id+')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.4);border:none;color:white;font-size:11px;padding:4px 8px;border-radius:4px;cursor:pointer">Change</button></div>':heroHtml)+'</div>'+
+        '<div class="pt-card-body">'+
+        '<div class="pt-card-title">'+esc(s.name||'Unnamed destination')+'</div>'+
+        '<div class="pt-card-dates">'+fD(s.dateFrom)+(s.dateTo?' \u2192 '+fD(s.dateTo):'')+(nts(s.dateFrom,s.dateTo)?' · '+(nts(s.dateFrom,s.dateTo))+' nights':'')+'</div>'+
+        '<div class="pt-rating" title="Rate this stop">'+starsHtml+'<span style="font-size:12px;color:var(--ink-muted);margin-left:6px;align-self:center">'+(s.rating>0?s.rating+'/5':'Rate this stop')+'</span></div>'+
+        '<textarea class="pt-review-input" placeholder="How did it actually go? Best bits, worst bits, would you go back..." onchange="setReview('+s.id+',this.value)">'+esc(s.review||'')+'</textarea>'+
+        '<div class="pt-photo-strip">'+photosHtml+'</div>'+
+        '</div></div>';
+    } else {
+      html+='<div class="pt-transport-card"><div class="pt-trans-icon">✈️</div><div><div class="pt-trans-title">'+esc(s.name||'Transport')+'</div><div class="pt-trans-meta">'+fD(s.dateFrom)+(s.departure?' · '+s.departure:'')+(s.arrival?' \u2192 '+s.arrival:'')+(s.carrier?' · '+esc(s.carrier):'')+(s.bookingRef?' · Ref: '+esc(s.bookingRef):'')+'</div></div><span class="status-pill '+SK[s.status]+'" style="cursor:default;margin-left:auto">'+SL[s.status]+'</span></div>';
+    }
+  });
+  if(total>0||nights>0){
+    html+='<div class="pt-summary-bar">';
+    if(nights>0)html+='<div class="pt-sum-item"><div class="pt-sum-val">'+nights+'</div><div class="pt-sum-lbl">Nights away</div></div>';
+    if(destStops.length>0)html+='<div class="pt-sum-item"><div class="pt-sum-val">'+destStops.length+'</div><div class="pt-sum-lbl">Destinations</div></div>';
+    if(total>0)html+='<div class="pt-sum-item"><div class="pt-sum-val">'+fC(total)+'</div><div class="pt-sum-lbl">Total spent</div></div>';
+    var rated=stops.filter(function(s){return s.rating>0;});if(rated.length>0){var avg=rated.reduce(function(a,s){return a+s.rating;},0)/rated.length;html+='<div class="pt-sum-item"><div class="pt-sum-val">'+avg.toFixed(1)+'/5</div><div class="pt-sum-lbl">Avg rating</div></div>';}
+    html+='</div>';
+  }
+  content.innerHTML=html;
+}
+
+function setRating(stopId,rating){var s=fS(stopId);if(!s)return;s.rating=rating;renderPostTrip();}
+function setReview(stopId,text){var s=fS(stopId);if(!s)return;s.review=text;}
+
+function triggerHeroUpload(stopId){curHeroStopId=stopId;document.getElementById('heroUpload').click();}
+function triggerPhotoUpload(stopId){curPhotoStopId=stopId;document.getElementById('photoUpload').click();}
+
+function handleHeroUpload(event){
+  var file=event.target.files[0];if(!file||!curHeroStopId)return;
+  var reader=new FileReader();
+  reader.onload=function(e){var s=fS(curHeroStopId);if(s){s.heroImage=e.target.result;renderPostTrip();}};
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+function handlePhotoUpload(event){
+  var files=Array.from(event.target.files);if(!files.length||!curPhotoStopId)return;
+  var s=fS(curPhotoStopId);if(!s)return;if(!s.photos)s.photos=[];
+  var remaining=files.length;
+  files.forEach(function(file){
+    var reader=new FileReader();
+    reader.onload=function(e){s.photos.push(e.target.result);remaining--;if(remaining===0)renderPostTrip();};
+    reader.readAsDataURL(file);
+  });
+  event.target.value='';
+}
+function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.add('open');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+
+/* ── PDF EXPORT ── */
+function exportPDF(){
+  closeShareModal();
+  var tripName=document.getElementById('tripNameInput').value||'Trip';
+  var total=stops.reduce(function(a,s){return a+sCost(s);},0);
+  var destStops=stops.filter(function(s){return s.type==='destination';});
+  var nights=destStops.reduce(function(a,s){return a+(nts(s.dateFrom,s.dateTo)||0);},0);
+  var allDates=stops.filter(function(s){return s.dateFrom;}).map(function(s){return s.dateFrom;});
+  var startDate=allDates.length>0?fD(allDates.reduce(function(a,b){return a<b?a:b;})):'';
+  var endDates=stops.filter(function(s){return s.dateTo||s.dateFrom;}).map(function(s){return s.dateTo||s.dateFrom;});
+  var endDate=endDates.length>0?fD(endDates.reduce(function(a,b){return a>b?a:b;})):'';
+
+  var pvStatusColors={booked:'#2a4a36',confirm:'#8a5a0a',tbc:'#9a9088',cancelled:'#7a2040'};
+  var pvStatusBg={booked:'#e8f2eb',confirm:'#fef3dc',tbc:'#ede6d8',cancelled:'#fae8ee'};
+
+  var stopsHtml=stops.map(function(s,i){
+    var isDest=s.type==='destination';var cost=sCost(s);
+    var statusStyle='background:'+pvStatusBg[s.status]+';color:'+pvStatusColors[s.status]+';';
+    if(isDest){
+      var metaItems='';
+      if(s.dateFrom)metaItems+='<div><span class="pv-stop-meta-label">Dates</span>'+fD(s.dateFrom)+(s.dateTo?' \u2192 '+fD(s.dateTo):'')+(nts(s.dateFrom,s.dateTo)?' ('+nts(s.dateFrom,s.dateTo)+' nights)':'')+'</div>';
+      if(s.accommodation)metaItems+='<div><span class="pv-stop-meta-label">Accommodation</span>'+esc(s.accommodation)+'</div>';
+      if(cost>0)metaItems+='<div><span class="pv-stop-meta-label">Total cost</span>'+fC(cost)+'</div>';
+      return'<div class="pv-stop'+(i===0?'':'')+'">'+'<div class="pv-stop-type-label pv-stop-type-dest">Destination</div>'+
+        '<div class="pv-stop-name">'+esc(s.name||'Unnamed')+'<span class="pv-status" style="'+statusStyle+'">'+SL[s.status]+'</span></div>'+
+        '<div class="pv-stop-dates">Stop '+(i+1)+' of '+stops.length+'</div>'+
+        (metaItems?'<div class="pv-stop-meta">'+metaItems+'</div>':'')+
+        (s.notes?'<div class="pv-stop-notes">'+esc(s.notes)+'</div>':'')+
+        (cost>0?'<table class="pv-cost-table"><tr><td>Accommodation</td><td style="text-align:right">'+fC(parseFloat(s.accommodationCost)||0)+'</td></tr><tr><td>Activities</td><td style="text-align:right">'+fC(parseFloat(s.activitiesCost)||0)+'</td></tr><tr><td>Food &amp; drink</td><td style="text-align:right">'+fC(parseFloat(s.foodCost)||0)+'</td></tr><tr><td>Subtotal</td><td style="text-align:right">'+fC(cost)+'</td></tr></table>':'')+
+        '</div>';
+    } else {
+      return'<div class="pv-stop">'+
+        '<div class="pv-stop-type-label pv-stop-type-trans">Transport</div>'+
+        '<div class="pv-stop-name">'+esc(s.name||'Transport')+'<span class="pv-status" style="'+statusStyle+'">'+SL[s.status]+'</span></div>'+
+        '<div class="pv-stop-meta">'+(s.dateFrom?'<div><span class="pv-stop-meta-label">Date</span>'+fD(s.dateFrom)+'</div>':'')+
+        (s.carrier?'<div><span class="pv-stop-meta-label">Carrier</span>'+esc(s.carrier)+'</div>':'')+
+        (s.departure?'<div><span class="pv-stop-meta-label">Departs</span>'+s.departure+(s.arrival?' \u2192 '+s.arrival:'')+'</div>':'')+
+        (s.bookingRef?'<div><span class="pv-stop-meta-label">Booking ref</span>'+esc(s.bookingRef)+'</div>':'')+
+        (sCost(s)>0?'<div><span class="pv-stop-meta-label">Cost</span>'+fC(sCost(s))+'</div>':'')+
+        '</div></div>';
+    }
+  }).join('');
+
+  var docsHtml=docs.length>0?docs.map(function(d){return'<div class="pv-doc-row"><div class="pv-doc-icon">'+(DI[d.cat]||'📎')+'</div><div class="pv-doc-name">'+esc(d.name)+(d.traveller?' ('+esc(d.traveller)+')':'')+'</div><div class="pv-doc-ref">'+(d.ref?'Ref: '+esc(d.ref):'')+(d.expiry?' · Exp: '+fD(d.expiry):'')+'</div></div>';}).join(''):'<p style="color:#9a9088;font-style:italic;font-size:10pt">No documents added yet</p>';
+
+  var pvHTML='<div class="pv-cover">'+
+    '<div style="font-family:DM Sans,sans-serif;font-size:10pt;color:#9a9088;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem">Travel Itinerary</div>'+
+    '<div class="pv-cover-title">'+esc(tripName)+'</div>'+
+    '<div class="pv-cover-sub">'+(startDate&&endDate?startDate+' \u2014 '+endDate:'Dates TBC')+'</div>'+
+    '<hr class="pv-divider" style="margin-top:auto">'+
+    '<div class="pv-cover-meta">'+
+    '<div><div class="pv-cover-meta-item">Travellers</div><div class="pv-cover-meta-val">'+travellers.length+'</div></div>'+
+    (destStops.length?'<div><div class="pv-cover-meta-item">Destinations</div><div class="pv-cover-meta-val">'+destStops.length+'</div></div>':'')+
+    (nights?'<div><div class="pv-cover-meta-item">Nights</div><div class="pv-cover-meta-val">'+nights+'</div></div>':'')+
+    (total?'<div><div class="pv-cover-meta-item">Total cost</div><div class="pv-cover-meta-val">'+fC(total)+'</div></div>':'')+
+    '</div>'+
+    '</div>'+
+    '<div style="padding:2cm" class="print-page-break">'+
+    '<h2 style="font-family:DM Serif Display,serif;font-size:24pt;color:#1a1410;margin-bottom:1.5rem">Itinerary</h2>'+
+    stopsHtml+
+    '<div class="pv-docs-section">'+
+    '<h2 class="pv-docs-title">Documents</h2>'+
+    docsHtml+
+    '</div>'+
+    '</div>';
+
+  var pv=document.getElementById('printView');
+  pv.innerHTML=pvHTML;
+  pv.style.display='block';
+  // hide app temporarily
+  document.querySelector('.app').style.display='none';
+  window.print();
+  document.querySelector('.app').style.display='';
+  pv.style.display='none';
+}
+
+/* ── SHARE ── */
+function openShareModal(){document.getElementById('shareModal').classList.add('open');}
+function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
+function copyShareLink(){navigator.clipboard.writeText(window.location.href).catch(function(){});alert('Link copied!');}
+function copyText(){var name=document.getElementById('tripNameInput').value||'Trip';var t='🌍 '+name+'\n\n';stops.forEach(function(s,i){t+=(i+1)+'. '+(s.name||(s.type==='destination'?'Destination':'Transport'));if(s.dateFrom)t+=' — '+fD(s.dateFrom);if(s.dateTo&&s.type==='destination')t+=' \u2192 '+fD(s.dateTo);t+=' ['+SL[s.status]+']\n';if(s.accommodation)t+='   🏨 '+s.accommodation+'\n';if(s.notes)t+='   📝 '+s.notes+'\n';var c=sCost(s);if(c>0)t+='   💷 '+fC(c)+'\n';t+='\n';});navigator.clipboard.writeText(t).catch(function(){});alert('Copied to clipboard!');}
+
+/* ── TRAVELLERS ── */
+function addTraveller(){document.getElementById('travellerModal').classList.add('open');document.getElementById('travellerName').value='';setTimeout(function(){document.getElementById('travellerName').focus();},100);}
+function closeTravellerModal(){document.getElementById('travellerModal').classList.remove('open');}
+function saveTraveller(){var name=document.getElementById('travellerName').value.trim();if(!name)return;travellers.push(name);var list=document.getElementById('travellerList');var c=AV[(travellers.length-1)%AV.length];var chip=document.createElement('div');chip.className='traveller-chip';chip.innerHTML='<div class="t-avatar" style="background:'+c[0]+';color:'+c[1]+'">'+name.slice(0,2).toUpperCase()+'</div><span>'+name+'</span>';list.appendChild(chip);closeTravellerModal();updateCosts();}
+
+/* ── PAGE NAV ── */
+function showPage(id,el){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});document.getElementById('page-'+id).classList.add('active');if(el)el.classList.add('active');}
+
+/* ── DEMO DATA ── */
+function loadDemo(){
+  stops=[
+    {id:++stopCtr,type:'transport',name:'London Heathrow \u2192 Hanoi',from:'London Heathrow',to:'Hanoi',carrier:'Vietnam Airlines',dateFrom:'2025-12-20',departure:'21:30',arrival:'16:45',bookingRef:'VN8802',transportCost:'680',status:'booked',accommodation:'',accommodationCost:'',activitiesCost:'',foodCost:'',notes:'',stopDocs:[{id:++docCtr,name:'Flight confirmation',cat:'booking',ref:'VN8802',notes:''}],heroImage:null,photos:[],rating:0,review:''},
+    {id:++stopCtr,type:'destination',name:'Hanoi',from:'',to:'',dateFrom:'2025-12-21',dateTo:'2025-12-25',accommodation:'Sofitel Legend Metropole',accommodationCost:'620',activitiesCost:'150',foodCost:'200',notes:'Old Quarter street food, Hoan Kiem Lake, day trip to Ha Long Bay',status:'booked',carrier:'',departure:'',arrival:'',bookingRef:'',transportCost:'',stopDocs:[],heroImage:null,photos:[],rating:0,review:''},
+    {id:++stopCtr,type:'transport',name:'Hanoi \u2192 Hoi An',from:'Hanoi',to:'Hoi An',carrier:'VietJet Air',dateFrom:'2025-12-25',departure:'08:00',arrival:'13:30',bookingRef:'VJ2241',transportCost:'95',status:'booked',accommodation:'',accommodationCost:'',activitiesCost:'',foodCost:'',notes:'',stopDocs:[],heroImage:null,photos:[],rating:0,review:''},
+    {id:++stopCtr,type:'destination',name:'Hoi An',from:'',to:'',dateFrom:'2025-12-25',dateTo:'2025-12-29',accommodation:'Anantara Hoi An Resort',accommodationCost:'740',activitiesCost:'120',foodCost:'180',notes:'Lantern festival, Ancient Town, My Son day trip, tailors on Le Loi',status:'confirm',carrier:'',departure:'',arrival:'',bookingRef:'',transportCost:'',stopDocs:[],heroImage:null,photos:[],rating:0,review:''},
+    {id:++stopCtr,type:'transport',name:'Hoi An \u2192 Ho Chi Minh City',from:'Hoi An',to:'Ho Chi Minh City',carrier:'VietJet Air',dateFrom:'2025-12-29',departure:'11:15',arrival:'12:30',bookingRef:'',transportCost:'60',status:'tbc',accommodation:'',accommodationCost:'',activitiesCost:'',foodCost:'',notes:'',stopDocs:[],heroImage:null,photos:[],rating:0,review:''},
+    {id:++stopCtr,type:'destination',name:'Ho Chi Minh City',from:'',to:'',dateFrom:'2025-12-29',dateTo:'2026-01-02',accommodation:'',accommodationCost:'480',activitiesCost:'100',foodCost:'200',notes:'Cu Chi Tunnels, Ben Thanh Market, Bui Vien for NYE',status:'tbc',carrier:'',departure:'',arrival:'',bookingRef:'',transportCost:'',stopDocs:[],heroImage:null,photos:[],rating:0,review:''},
+  ];
+  docs=[
+    {id:++docCtr,name:"Deven's passport",cat:'passport',ref:'GB129384756',expiry:'2031-04-12',notes:'',stopId:'',traveller:'Deven'},
+    {id:++docCtr,name:'Travel insurance',cat:'insurance',ref:'TI-884422',expiry:'2026-01-10',notes:'Covers all travellers',stopId:'',traveller:''},
+    {id:++docCtr,name:'Vietnam e-visa',cat:'visa',ref:'EVN-2025-DE',expiry:'2026-01-15',notes:'E-visa, 90 days',stopId:'',traveller:'Deven'},
+    {id:++docCtr,name:'Flight confirmation',cat:'booking',ref:'VN8802',expiry:'',notes:'LHR \u2192 HAN',stopId:String(stops[0].id),traveller:''},
+  ];
+  calYear=2025;calMonth=11;
+  renderStops();renderCalendar();renderTimeline();renderDocs();updateCosts();
+}
+
+renderCalendar();renderTimeline();renderDocs();fetchFxRate();loadDemo();
+</script>
+</body>
+</html>
